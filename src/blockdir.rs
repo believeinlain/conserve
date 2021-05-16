@@ -29,7 +29,6 @@ use std::sync::Mutex;
 
 use blake2_rfc::blake2b;
 use blake2_rfc::blake2b::Blake2b;
-use itertools::Itertools;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use thousands::Separable;
@@ -210,40 +209,30 @@ impl BlockDir {
         Ok(dirs)
     }
 
-    fn iter_block_dir_entries(&self) -> Result<impl Iterator<Item = DirEntry>> {
-        let transport = self.transport.clone();
-        Ok(self
-            .subdirs()?
-            .into_iter()
-            .map(move |subdir_name| transport.iter_dir_entries(&subdir_name))
-            .filter_map(|iter_or| {
-                if let Err(ref err) = iter_or {
-                    ui::problem(&format!("Error listing block directory: {:?}", &err));
-                }
-                iter_or.ok()
-            })
-            .flatten()
-            .filter_map(|iter_or| {
-                if let Err(ref err) = iter_or {
-                    ui::problem(&format!("Error listing block subdirectory: {:?}", &err));
-                }
-                iter_or.ok()
-            })
-            .filter(|DirEntry { name, kind, .. }| {
-                *kind == Kind::File
-                    && name.len() == BLOCKDIR_FILE_NAME_LEN
-                    && !name.starts_with(TMP_PREFIX)
-            }))
-    }
-
     /// Return all the blocknames in the blockdir,
     /// in arbitrary order.
-    pub fn block_names(&self) -> Result<impl Iterator<Item = BlockHash>> {
-        let mut progress_bar = ProgressBar::new();
-        progress_bar.set_phase("List blocks");
-        Ok(self
-            .iter_block_dir_entries()?
-            .filter_map(|de| de.name.parse().ok()))
+    pub fn block_names(&self) -> Result<impl ParallelIterator<Item = BlockHash>> {
+        let transport = self.transport.clone();
+        // TODO: Log but don't abort on any IO errors.
+        Ok(self.subdirs()?.into_par_iter().flat_map_iter(move |subdir_name| {
+            transport
+                .iter_dir_entries(&subdir_name)
+                .unwrap()
+                .flat_map(|de_or| -> Option<BlockHash> {
+                    let DirEntry { name, kind, .. } = de_or.unwrap();
+                    if kind == Kind::File
+                        && name.len() == BLOCKDIR_FILE_NAME_LEN
+                        && !name.starts_with(TMP_PREFIX)
+                    {
+                        name.parse().ok()
+                    } else {
+                        None
+                    }
+                })
+        }))
+
+        // let mut blocks: Vec<BlockHash> = pit.into_par_iter().collect();
+        // Ok(blocks.into_iter())
 
         // .enumerate()
         // .inspect(|(i, _hash)| {
@@ -264,7 +253,7 @@ impl BlockDir {
         // directories of the right length.
         // TODO: Test having a block with the right compression but the wrong contents.
         ui::println("Count blocks...");
-        let blocks = self.block_names()?.collect_vec();
+        let blocks: Vec<BlockHash> = self.block_names()?.collect();
         crate::ui::println(&format!(
             "Check {} blocks...",
             blocks.len().separate_with_commas()

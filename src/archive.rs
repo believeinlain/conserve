@@ -19,7 +19,6 @@ use std::path::Path;
 use std::sync::Mutex;
 use std::time::Instant;
 
-use itertools::Itertools;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -229,7 +228,7 @@ impl Archive {
     }
 
     /// Returns an iterator of blocks that are present and referenced by no index.
-    pub fn unreferenced_blocks(&self) -> Result<impl Iterator<Item = BlockHash>> {
+    pub fn unreferenced_blocks(&self) -> Result<impl ParallelIterator<Item = BlockHash>> {
         let referenced = self.referenced_blocks()?;
         Ok(self
             .block_dir()
@@ -264,7 +263,7 @@ impl Archive {
             .block_dir()
             .block_names()?
             .filter(|bh| !referenced.contains(bh))
-            .collect_vec();
+            .collect::<Vec<BlockHash>>();
         let unref_count = unref.len();
         stats.unreferenced_block_count = unref_count;
 

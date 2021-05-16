@@ -16,6 +16,7 @@
 use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
 
+use rayon::iter::ParallelIterator;
 use structopt::StructOpt;
 
 use conserve::backup::BackupOptions;
@@ -217,10 +218,10 @@ impl Command {
                 ui::println(&format!("Backup complete.\n{}", stats));
             }
             Command::Debug(Debug::Blocks { archive }) => {
-                let mut bw = BufWriter::new(stdout);
-                for hash in Archive::open_path(archive)?.block_dir().block_names()? {
-                    writeln!(bw, "{}", hash)?;
-                }
+                Archive::open_path(archive)?
+                    .block_dir()
+                    .block_names()?
+                    .for_each(|bh| println!("{}", bh));
             }
             Command::Debug(Debug::Index { archive, backup }) => {
                 let st = stored_tree_from_opt(archive, &backup)?;
@@ -233,10 +234,9 @@ impl Command {
                 }
             }
             Command::Debug(Debug::Unreferenced { archive }) => {
-                let mut bw = BufWriter::new(stdout);
-                for hash in Archive::open_path(archive)?.unreferenced_blocks()? {
-                    writeln!(bw, "{}", hash)?;
-                }
+                Archive::open_path(archive)?
+                    .unreferenced_blocks()?
+                    .for_each(|bh| println!("{}", bh));
             }
             Command::Delete {
                 archive,

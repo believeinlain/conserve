@@ -20,6 +20,7 @@ use predicates::prelude::*;
 
 use conserve::test_fixtures::ScratchArchive;
 use conserve::BandId;
+use rayon::iter::ParallelIterator;
 
 use crate::run_conserve;
 
