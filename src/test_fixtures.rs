@@ -1,5 +1,5 @@
 // Conserve backup system.
-// Copyright 2016, 2017, 2018, 2019 Martin Pool.
+// Copyright 2016, 2017, 2018, 2019, 2021 Martin Pool.
 
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -176,4 +176,21 @@ impl Default for TreeFixture {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// Return a list of paths to all per-format-version archives of a given name,
+/// such as `minimal`.
+///
+/// This assumes the cwd is the conserve source tree root, which is true during
+/// `cargo test`.
+pub fn testdata_archives(name: &str) -> Vec<PathBuf> {
+    let mut base = PathBuf::from("testdata/archive");
+    base.push(name);
+    let mut r: Vec<PathBuf> = base
+        .read_dir()
+        .expect("read testdata dir failed")
+        .map(|r| r.expect("read testdata dir entry failed").path())
+        .collect();
+    r.sort();
+    r
 }

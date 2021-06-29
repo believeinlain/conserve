@@ -1,3 +1,4 @@
+// Conserve backup system.
 // Copyright 2021 Martin Pool.
 
 // This program is free software; you can redistribute it and/or modify
@@ -10,16 +11,21 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
-//! Tests for the Conserve library API.
+use std::path::PathBuf;
 
-mod apath;
-mod backup;
-mod blockhash;
-mod damaged;
-mod delete;
-mod diff;
-mod gc;
-mod old_archives;
-mod restore;
-mod test_fixtures;
-mod transport;
+use conserve::test_fixtures::testdata_archives;
+
+#[test]
+#[should_panic(expected = "read testdata dir failed")]
+fn testdata_archives_nonexistent_panics() {
+    testdata_archives("nonexistent");
+}
+
+#[test]
+
+fn testdata_archives_simple() {
+    assert_eq!(
+        testdata_archives("simple"),
+        vec![PathBuf::from("testdata/archive/simple/v0.6.10")]
+    );
+}
