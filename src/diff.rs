@@ -27,6 +27,7 @@ use MergedEntryKind::*;
 
 #[derive(Debug)]
 pub struct DiffOptions {
+    pub include: Include,
     pub exclude: Exclude,
     pub include_unchanged: bool,
 }
@@ -34,6 +35,7 @@ pub struct DiffOptions {
 impl Default for DiffOptions {
     fn default() -> Self {
         DiffOptions {
+            include: Include::all(),
             exclude: Exclude::nothing(),
             include_unchanged: false,
         }
@@ -82,10 +84,10 @@ pub fn diff(
     let include_unchanged: bool = options.include_unchanged;
     // TODO: Take an option for the subtree?
     let ait = st
-        .iter_entries(Apath::root(), options.exclude.clone())?
+        .iter_entries(Apath::root(), options.include.clone(), options.exclude.clone())?
         .readahead(readahead);
     let bit = lt
-        .iter_entries(Apath::root(), options.exclude.clone())?
+        .iter_entries(Apath::root(), options.include.clone(), options.exclude.clone())?
         .filter(|le| le.kind() != Unknown)
         .readahead(readahead);
     Ok(MergeTrees::new(ait, bit)

@@ -51,8 +51,12 @@ impl Include {
     }
 
     /// Include all items not specifically excluded
-    pub fn all() -> Result<Include> {
-        IncludeBuilder::new().add("/**/*")?.build()
+    pub fn all() -> Include {
+        IncludeBuilder::new()
+            .add("/**/*")
+            .unwrap()
+            .build()
+            .expect("Unable to build default 'include all' glob.")
     }
 
     /// True if this apath should be excluded.
@@ -188,7 +192,7 @@ mod tests {
 
     #[test]
     fn all_parse() {
-        let include = Include::all().unwrap();
+        let include = Include::all();
         assert!(include.matches("/a"));
         assert!(include.matches("/.things"));
         assert!(include.matches("/stuff/and/things"));

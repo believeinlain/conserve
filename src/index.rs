@@ -281,7 +281,7 @@ impl IndexRead {
     /// Make an iterator that will return all entries in this band.
     pub fn iter_entries(self) -> IndexEntryIter<IndexHunkIter> {
         // TODO: An option to pass in a subtree?
-        IndexEntryIter::new(self.iter_hunks(), Apath::root(), Exclude::nothing())
+        IndexEntryIter::new(self.iter_hunks(), Apath::root(), Include::all(), Exclude::nothing())
     }
 
     /// Make an iterator that returns hunks of entries from this index.
@@ -404,15 +404,17 @@ pub struct IndexEntryIter<HI: Iterator<Item = Vec<IndexEntry>>> {
     buffered_entries: Peekable<vec::IntoIter<IndexEntry>>,
     hunk_iter: HI,
     subtree: Apath,
+    include: Include,
     exclude: Exclude,
 }
 
 impl<HI: Iterator<Item = Vec<IndexEntry>>> IndexEntryIter<HI> {
-    pub(crate) fn new(hunk_iter: HI, subtree: Apath, exclude: Exclude) -> Self {
+    pub(crate) fn new(hunk_iter: HI, subtree: Apath, include: Include, exclude: Exclude) -> Self {
         IndexEntryIter {
             buffered_entries: Vec::<IndexEntry>::new().into_iter().peekable(),
             hunk_iter,
             subtree,
+            include,
             exclude,
         }
     }
@@ -428,6 +430,9 @@ impl<HI: Iterator<Item = Vec<IndexEntry>>> Iterator for IndexEntryIter<HI> {
                 // in this page matches; or terminating early if we know
                 // nothing else in the index can be under this subtree.
                 if !self.subtree.is_prefix_of(&entry.apath) {
+                    continue;
+                }
+                if !self.include.matches(&entry.apath) {
                     continue;
                 }
                 if self.exclude.matches(&entry.apath) {

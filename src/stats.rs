@@ -148,6 +148,7 @@ pub struct IndexWriterStats {
 #[derive(Debug, Default, Clone, Eq, PartialEq)]
 pub struct LiveTreeIterStats {
     pub directories_visited: usize,
+    pub inclusions: usize,
     pub exclusions: usize,
     pub metadata_error: usize,
     pub entries_returned: usize,

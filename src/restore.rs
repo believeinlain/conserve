@@ -31,6 +31,7 @@ use crate::*;
 #[derive(Debug)]
 pub struct RestoreOptions {
     pub print_filenames: bool,
+    pub include: Include,
     pub exclude: Exclude,
     /// Restore only this subdirectory.
     pub only_subtree: Option<Apath>,
@@ -43,6 +44,7 @@ impl Default for RestoreOptions {
     fn default() -> Self {
         RestoreOptions {
             print_filenames: false,
+            include: Include::all(),
             overwrite: false,
             band_selection: BandSelectionPolicy::LatestClosed,
             exclude: Exclude::nothing(),
@@ -100,6 +102,7 @@ pub fn restore(
     // }
     let entry_iter = st.iter_entries(
         options.only_subtree.clone().unwrap_or_else(Apath::root),
+        options.include.clone(),
         options.exclude.clone(),
     )?;
     for entry in entry_iter {

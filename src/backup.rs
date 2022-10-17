@@ -47,7 +47,7 @@ impl Default for BackupOptions {
     fn default() -> BackupOptions {
         BackupOptions {
             print_filenames: false,
-            include: Include::all().unwrap(),
+            include: Include::all(),
             exclude: Exclude::nothing(),
             max_entries_per_hunk: crate::index::MAX_ENTRIES_PER_HUNK,
         }
@@ -104,7 +104,7 @@ pub fn backup(
     let mut stats = BackupStats::default();
     let mut view = nutmeg::View::new(ProgressModel::default(), ui::nutmeg_options());
 
-    let entry_iter = source.iter_entries(Apath::root(), options.exclude.clone())?;
+    let entry_iter = source.iter_entries(Apath::root(), options.include.clone(), options.exclude.clone())?;
     for entry_group in entry_iter.chunks(options.max_entries_per_hunk).into_iter() {
         for entry in entry_group {
             view.update(|model| {
@@ -171,7 +171,7 @@ impl BackupWriter {
             return Err(Error::GarbageCollectionLockHeld);
         }
         let basis_index = IterStitchedIndexHunks::new(archive, archive.last_band_id()?)
-            .iter_entries(Apath::root(), Exclude::nothing());
+            .iter_entries(Apath::root(), Include::all(), Exclude::nothing());
 
         // Create the new band only after finding the basis band!
         let band = Band::create(archive)?;

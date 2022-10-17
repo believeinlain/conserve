@@ -55,6 +55,12 @@ enum Command {
         /// Print copied file names.
         #[clap(long, short)]
         verbose: bool,
+
+        #[clap(long, short, number_of_values = 1)]
+        include: Vec<String>,
+        #[clap(long, short = 'I', number_of_values = 1)]
+        include_from: Vec<String>,
+
         #[clap(long, short, number_of_values = 1)]
         exclude: Vec<String>,
         #[clap(long, short = 'E', number_of_values = 1)]
@@ -95,6 +101,12 @@ enum Command {
         source: PathBuf,
         #[clap(long, short)]
         backup: Option<BandId>,
+
+        #[clap(long, short, number_of_values = 1)]
+        include: Vec<String>,
+        #[clap(long, short = 'I', number_of_values = 1)]
+        include_from: Vec<String>,
+
         #[clap(long, short, number_of_values = 1)]
         exclude: Vec<String>,
         #[clap(long, short = 'E', number_of_values = 1)]
@@ -131,6 +143,11 @@ enum Command {
         stos: StoredTreeOrSource,
 
         #[clap(long, short, number_of_values = 1)]
+        include: Vec<String>,
+        #[clap(long, short = 'I', number_of_values = 1)]
+        include_from: Vec<String>,
+
+        #[clap(long, short, number_of_values = 1)]
         exclude: Vec<String>,
         #[clap(long, short = 'E', number_of_values = 1)]
         exclude_from: Vec<String>,
@@ -146,6 +163,12 @@ enum Command {
         force_overwrite: bool,
         #[clap(long, short)]
         verbose: bool,
+
+        #[clap(long, short, number_of_values = 1)]
+        include: Vec<String>,
+        #[clap(long, short = 'I', number_of_values = 1)]
+        include_from: Vec<String>,
+
         #[clap(long, short, number_of_values = 1)]
         exclude: Vec<String>,
         #[clap(long, short = 'E', number_of_values = 1)]
@@ -164,6 +187,11 @@ enum Command {
         /// Count in bytes, not megabytes.
         #[clap(long)]
         bytes: bool,
+
+        #[clap(long, short, number_of_values = 1)]
+        include: Vec<String>,
+        #[clap(long, short = 'I', number_of_values = 1)]
+        include_from: Vec<String>,
 
         #[clap(long, short, number_of_values = 1)]
         exclude: Vec<String>,
@@ -256,14 +284,18 @@ impl Command {
                 archive,
                 source,
                 verbose,
+                include,
+                include_from,
                 exclude,
                 exclude_from,
                 no_stats,
             } => {
+                let include = IncludeBuilder::from_args(include, include_from)?.build()?;
                 let exclude = ExcludeBuilder::from_args(exclude, exclude_from)?.build()?;
                 let source = &LiveTree::open(source)?;
                 let options = BackupOptions {
                     print_filenames: *verbose,
+                    include,
                     exclude,
                     ..Default::default()
                 };
@@ -320,14 +352,18 @@ impl Command {
                 archive,
                 source,
                 backup,
+                include,
+                include_from,
                 exclude,
                 exclude_from,
                 include_unchanged,
             } => {
+                let include = IncludeBuilder::from_args(include, include_from)?.build()?;
                 let exclude = ExcludeBuilder::from_args(exclude, exclude_from)?.build()?;
                 let st = stored_tree_from_opt(archive, backup)?;
                 let lt = LiveTree::open(source)?;
                 let options = DiffOptions {
+                    include,
                     exclude,
                     include_unchanged: *include_unchanged,
                 };
@@ -357,21 +393,24 @@ impl Command {
             }
             Command::Ls {
                 stos,
+                include,
+                include_from,
                 exclude,
                 exclude_from,
             } => {
+                let include = IncludeBuilder::from_args(include, include_from)?.build()?;
                 let exclude = ExcludeBuilder::from_args(exclude, exclude_from)?.build()?;
                 if let Some(archive) = &stos.archive {
                     // TODO: Option for subtree.
                     show::show_entry_names(
                         stored_tree_from_opt(archive, &stos.backup)?
-                            .iter_entries(Apath::root(), exclude)?,
+                            .iter_entries(Apath::root(), include, exclude)?,
                         &mut stdout,
                     )?;
                 } else {
                     show::show_entry_names(
                         LiveTree::open(stos.source.clone().unwrap())?
-                            .iter_entries(Apath::root(), exclude)?,
+                            .iter_entries(Apath::root(), include, exclude)?,
                         &mut stdout,
                     )?;
                 }
@@ -382,6 +421,8 @@ impl Command {
                 backup,
                 verbose,
                 force_overwrite,
+                include,
+                include_from,
                 exclude,
                 exclude_from,
                 only_subtree,
@@ -390,8 +431,10 @@ impl Command {
                 let band_selection = band_selection_policy_from_opt(backup);
                 let archive = Archive::open(open_transport(archive)?)?;
                 let exclude = ExcludeBuilder::from_args(exclude, exclude_from)?.build()?;
+                let include = IncludeBuilder::from_args(include, include_from)?.build()?;
                 let options = RestoreOptions {
                     print_filenames: *verbose,
+                    include,
                     exclude,
                     only_subtree: only_subtree.clone(),
                     band_selection,
@@ -406,17 +449,20 @@ impl Command {
             Command::Size {
                 stos,
                 bytes,
+                include,
+                include_from,
                 exclude,
                 exclude_from,
             } => {
+                let includes = IncludeBuilder::from_args(include, include_from)?.build()?;
                 let excludes = ExcludeBuilder::from_args(exclude, exclude_from)?.build()?;
                 let size = if let Some(archive) = &stos.archive {
                     stored_tree_from_opt(archive, &stos.backup)?
-                        .size(excludes)?
+                        .size(includes, excludes)?
                         .file_bytes
                 } else {
                     LiveTree::open(stos.source.as_ref().unwrap())?
-                        .size(excludes)?
+                        .size(includes, excludes)?
                         .file_bytes
                 };
                 if *bytes {

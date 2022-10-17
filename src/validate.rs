@@ -108,7 +108,7 @@ pub(crate) fn validate_stored_tree(st: &StoredTree) -> Result<(BlockLengths, Val
     let mut block_lens = BlockLengths::new();
     let stats = ValidateStats::default();
     for entry in st
-        .iter_entries(Apath::root(), Exclude::nothing())?
+        .iter_entries(Apath::root(), Include::all(), Exclude::nothing())?
         .filter(|entry| entry.kind() == Kind::File)
     {
         for addr in entry.addrs {
