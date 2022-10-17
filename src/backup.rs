@@ -35,6 +35,11 @@ pub struct BackupOptions {
     /// Exclude these globs from the backup.
     pub exclude: Exclude,
 
+    /// Include only these globs in the backup - includes all by default.
+    /// Exclude override include, so for a file to be included it must be
+    /// both captured by the include globs and not captured by the exclude globs.
+    pub include: Include,
+
     pub max_entries_per_hunk: usize,
 }
 
@@ -42,6 +47,7 @@ impl Default for BackupOptions {
     fn default() -> BackupOptions {
         BackupOptions {
             print_filenames: false,
+            include: Include::all().unwrap(),
             exclude: Exclude::nothing(),
             max_entries_per_hunk: crate::index::MAX_ENTRIES_PER_HUNK,
         }
