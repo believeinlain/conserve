@@ -149,10 +149,10 @@ mod tests {
         let tb = TreeFixture::new();
         let di = MergeTrees::new(
             ta.live_tree()
-                .iter_entries(Apath::root(), Exclude::nothing())
+                .iter_entries(Apath::root(), Include::all(), Exclude::nothing())
                 .unwrap(),
             tb.live_tree()
-                .iter_entries(Apath::root(), Exclude::nothing())
+                .iter_entries(Apath::root(), Include::all(), Exclude::nothing())
                 .unwrap(),
         )
         .collect::<Vec<_>>();
