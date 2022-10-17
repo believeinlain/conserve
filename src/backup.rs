@@ -104,7 +104,11 @@ pub fn backup(
     let mut stats = BackupStats::default();
     let mut view = nutmeg::View::new(ProgressModel::default(), ui::nutmeg_options());
 
-    let entry_iter = source.iter_entries(Apath::root(), options.include.clone(), options.exclude.clone())?;
+    let entry_iter = source.iter_entries(
+        Apath::root(),
+        options.include.clone(),
+        options.exclude.clone(),
+    )?;
     for entry_group in entry_iter.chunks(options.max_entries_per_hunk).into_iter() {
         for entry in entry_group {
             view.update(|model| {

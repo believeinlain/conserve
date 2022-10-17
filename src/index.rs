@@ -281,7 +281,12 @@ impl IndexRead {
     /// Make an iterator that will return all entries in this band.
     pub fn iter_entries(self) -> IndexEntryIter<IndexHunkIter> {
         // TODO: An option to pass in a subtree?
-        IndexEntryIter::new(self.iter_hunks(), Apath::root(), Include::all(), Exclude::nothing())
+        IndexEntryIter::new(
+            self.iter_hunks(),
+            Apath::root(),
+            Include::all(),
+            Exclude::nothing(),
+        )
     }
 
     /// Make an iterator that returns hunks of entries from this index.

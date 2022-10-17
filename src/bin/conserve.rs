@@ -403,14 +403,20 @@ impl Command {
                 if let Some(archive) = &stos.archive {
                     // TODO: Option for subtree.
                     show::show_entry_names(
-                        stored_tree_from_opt(archive, &stos.backup)?
-                            .iter_entries(Apath::root(), include, exclude)?,
+                        stored_tree_from_opt(archive, &stos.backup)?.iter_entries(
+                            Apath::root(),
+                            include,
+                            exclude,
+                        )?,
                         &mut stdout,
                     )?;
                 } else {
                     show::show_entry_names(
-                        LiveTree::open(stos.source.clone().unwrap())?
-                            .iter_entries(Apath::root(), include, exclude)?,
+                        LiveTree::open(stos.source.clone().unwrap())?.iter_entries(
+                            Apath::root(),
+                            include,
+                            exclude,
+                        )?,
                         &mut stdout,
                     )?;
                 }

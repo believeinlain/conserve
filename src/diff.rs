@@ -84,10 +84,18 @@ pub fn diff(
     let include_unchanged: bool = options.include_unchanged;
     // TODO: Take an option for the subtree?
     let ait = st
-        .iter_entries(Apath::root(), options.include.clone(), options.exclude.clone())?
+        .iter_entries(
+            Apath::root(),
+            options.include.clone(),
+            options.exclude.clone(),
+        )?
         .readahead(readahead);
     let bit = lt
-        .iter_entries(Apath::root(), options.include.clone(), options.exclude.clone())?
+        .iter_entries(
+            Apath::root(),
+            options.include.clone(),
+            options.exclude.clone(),
+        )?
         .filter(|le| le.kind() != Unknown)
         .readahead(readahead);
     Ok(MergeTrees::new(ait, bit)
