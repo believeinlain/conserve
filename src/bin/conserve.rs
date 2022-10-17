@@ -173,7 +173,7 @@ enum Command {
         exclude: Vec<String>,
         #[clap(long, short = 'E', number_of_values = 1)]
         exclude_from: Vec<String>,
-        #[clap(long = "only", short = 'i', number_of_values = 1)]
+        #[clap(long = "only", short = 'x', number_of_values = 1)]
         only_subtree: Option<Apath>,
         #[clap(long)]
         no_stats: bool,
